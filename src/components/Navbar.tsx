@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, History, LogOut } from "lucide-react";
+import { Home, History, LogOut, User } from "lucide-react";
 import { motion } from "framer-motion";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   const location = useLocation();
@@ -20,10 +21,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white border-b border-border py-4 px-6 sticky top-0 z-10 shadow-sm">
+    <nav className="bg-background border-b border-border py-4 px-6 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/home" className="font-bold text-xl text-primary">
-          MindCheck
+          Manodarpan
         </Link>
 
         {/* Desktop Navigation */}
@@ -52,6 +53,20 @@ const Navbar = () => {
             <span>History</span>
           </Link>
 
+          <Link
+            to="/profile"
+            className={`flex items-center space-x-2 ${
+              isActive("/profile")
+                ? "text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <User size={20} />
+            <span>Profile</span>
+          </Link>
+
+          <ThemeToggle />
+
           <Button
             variant="ghost"
             onClick={handleLogout}
@@ -63,43 +78,46 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          className="md:hidden text-muted-foreground"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          )}
-        </button>
+        <div className="md:hidden flex items-center space-x-4">
+          <ThemeToggle />
+          <button
+            className="text-muted-foreground"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Navigation */}
@@ -136,6 +154,19 @@ const Navbar = () => {
             >
               <History size={20} />
               <span>History</span>
+            </Link>
+
+            <Link
+              to="/profile"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`flex items-center space-x-3 py-2 px-4 w-full ${
+                isActive("/profile")
+                  ? "text-primary font-medium"
+                  : "text-muted-foreground"
+              }`}
+            >
+              <User size={20} />
+              <span>Profile</span>
             </Link>
 
             <Button

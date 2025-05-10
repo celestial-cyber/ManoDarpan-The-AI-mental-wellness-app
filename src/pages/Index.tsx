@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import AuthForm from "../components/AuthForm";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "../components/ThemeToggle";
 
 const Index = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,7 +19,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-calm-gray to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-secondary to-background p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -27,7 +32,7 @@ const Index = () => {
       >
         <div className="card-calm">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2 text-foreground">MindCheck</h1>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Manodarpan</h1>
             <p className="text-muted-foreground">Your daily mental wellness companion</p>
           </div>
           
