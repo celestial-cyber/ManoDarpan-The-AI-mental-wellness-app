@@ -91,6 +91,7 @@ const Profile = () => {
       entry.result.emotion.toLowerCase().includes('content')
     ).length;
     
+    // Fix: Ensure we're using numeric values for the calculation
     const positivePercentage = Math.round((positiveEmotions / moodHistory.length) * 100);
     
     return {
