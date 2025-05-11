@@ -1,182 +1,99 @@
 
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, History, LogOut, User } from "lucide-react";
-import { motion } from "framer-motion";
+import { Menu, X, Home, History as HistoryIcon, User, LayoutDashboard } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    console.log("User logged out");
-    navigate("/");
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const menuItems = [
+    { name: "Check-in", path: "/home", icon: <Home className="h-5 w-5" /> },
+    { name: "History", path: "/history", icon: <HistoryIcon className="h-5 w-5" /> },
+    { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { name: "Profile", path: "/profile", icon: <User className="h-5 w-5" /> },
+  ];
 
   return (
-    <nav className="bg-background border-b border-border py-4 px-6 sticky top-0 z-10 shadow-sm">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/home" className="font-bold text-xl text-primary">
-          Manodarpan
-        </Link>
+    <nav className="bg-background border-b border-border">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center">
+            <Link to="/" className="flex-shrink-0 flex items-center">
+              <span className="text-xl font-bold text-primary">Manodarpan</span>
+            </Link>
+          </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link
-            to="/home"
-            className={`flex items-center space-x-2 ${
-              isActive("/home")
-                ? "text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Home size={20} />
-            <span>Home</span>
-          </Link>
+          {/* Desktop navigation */}
+          <div className="hidden md:block">
+            <div className="flex items-center space-x-1">
+              {menuItems.map(item => (
+                <Link 
+                  key={item.path} 
+                  to={item.path}
+                  className={cn(
+                    "px-3 py-2 rounded-md text-sm font-medium relative flex items-center",
+                    location.pathname === item.path
+                      ? "text-primary"
+                      : "text-foreground hover:bg-secondary transition-colors"
+                  )}
+                >
+                  <span className="mr-2">{item.icon}</span>
+                  {item.name}
+                  {location.pathname === item.path && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
 
-          <Link
-            to="/history"
-            className={`flex items-center space-x-2 ${
-              isActive("/history")
-                ? "text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <History size={20} />
-            <span>History</span>
-          </Link>
-
-          <Link
-            to="/profile"
-            className={`flex items-center space-x-2 ${
-              isActive("/profile")
-                ? "text-primary font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <User size={20} />
-            <span>Profile</span>
-          </Link>
-
-          <ThemeToggle />
-
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className="flex items-center space-x-2 text-muted-foreground hover:text-foreground"
-          >
-            <LogOut size={20} />
-            <span>Logout</span>
-          </Button>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center space-x-4">
-          <ThemeToggle />
-          <button
-            className="text-muted-foreground"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            )}
-          </button>
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <div className="md:hidden">
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
+                {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      {isMobileMenuOpen && (
+      {/* Mobile navigation */}
+      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-          className="md:hidden mt-4 pt-4 border-t"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="md:hidden bg-background border-b border-border pb-3"
         >
-          <div className="flex flex-col space-y-4 items-center">
-            <Link
-              to="/home"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center space-x-3 py-2 px-4 w-full ${
-                isActive("/home")
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground"
-              }`}
-            >
-              <Home size={20} />
-              <span>Home</span>
-            </Link>
-
-            <Link
-              to="/history"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center space-x-3 py-2 px-4 w-full ${
-                isActive("/history")
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground"
-              }`}
-            >
-              <History size={20} />
-              <span>History</span>
-            </Link>
-
-            <Link
-              to="/profile"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center space-x-3 py-2 px-4 w-full ${
-                isActive("/profile")
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground"
-              }`}
-            >
-              <User size={20} />
-              <span>Profile</span>
-            </Link>
-
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="flex items-center space-x-3 py-2 px-4 w-full text-muted-foreground justify-start"
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </Button>
+          <div className="px-2 pt-2 pb-3 space-y-1 flex flex-col">
+            {menuItems.map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "px-3 py-2 rounded-md text-base font-medium flex items-center",
+                  location.pathname === item.path
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-secondary transition-colors"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.name}
+              </Link>
+            ))}
           </div>
         </motion.div>
       )}

@@ -22,6 +22,10 @@ import {
   ChartTooltipContent
 } from "@/components/ui/chart";
 import { useEffect } from "react";
+import { Download, Trash, Shield, Calendar, Award } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { calculateWellnessScore } from "@/utils/wellnessScore";
 
 const Profile = () => {
   // Mock user data (would normally come from a database)
@@ -29,11 +33,13 @@ const Profile = () => {
     name: "Alex Johnson",
     email: "alex@example.com",
     joinDate: "May 2023",
-    avatar: "" // Empty string will trigger the fallback
+    avatar: "", // Empty string will trigger the fallback
+    streak: 4
   });
 
   // Fetch mood history from localStorage
   const [moodHistory, setMoodHistory] = useState<any[]>([]);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Fetch mood history from localStorage
@@ -49,7 +55,8 @@ const Profile = () => {
         currentMood: { emotion: "No data", date: new Date() },
         mostFrequentEmotion: "No data",
         weeklyBreakdown: [],
-        positivePercentage: 0
+        positivePercentage: 0,
+        wellnessScore: 0
       };
     }
     
@@ -92,16 +99,21 @@ const Profile = () => {
     ).length;
     
     // Fix: Ensure we're using numeric values for the calculation
-    const positivePercentage = Math.round((positiveEmotions / moodHistory.length) * 100);
+    const positivePercentage = moodHistory.length > 0 ? 
+      Math.round((positiveEmotions / moodHistory.length) * 100) : 0;
+    
+    // Calculate wellness score
+    const wellnessScore = calculateWellnessScore(moodHistory, user.streak);
     
     return {
       checkInsCount: moodHistory.length,
       currentMood,
       mostFrequentEmotion,
       weeklyBreakdown,
-      positivePercentage
+      positivePercentage,
+      wellnessScore
     };
-  }, [moodHistory]);
+  }, [moodHistory, user.streak]);
 
   // Mood distribution data for pie chart
   const moodDistribution = useMemo(() => {
@@ -118,6 +130,55 @@ const Profile = () => {
   
   // Colors for the pie chart
   const COLORS = ['#8884d8', '#83a6ed', '#8dd1e1', '#82ca9d', '#a4de6c', '#d0ed57', '#ffc658'];
+
+  const handleDataExport = () => {
+    // Create a CSV from the mood history
+    const headers = ["Date", "Emotion", "Entry", "Analysis", "Advice"];
+    const csvRows = [
+      headers.join(','),
+      ...moodHistory.map(entry => {
+        const date = new Date(entry.date).toLocaleDateString();
+        const emotion = entry.result.emotion;
+        const journalEntry = `"${entry.entry.replace(/"/g, '""')}"`;
+        const analysis = `"${entry.result.analysis.replace(/"/g, '""')}"`;
+        const advice = `"${entry.result.advice.replace(/"/g, '""')}"`;
+        return [date, emotion, journalEntry, analysis, advice].join(',');
+      })
+    ];
+    
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "manodarpan_mood_journal.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Data exported",
+      description: "Your mood journal has been downloaded as a CSV file",
+    });
+  };
+  
+  const handleDataDelete = () => {
+    if (confirm("Are you sure you want to delete all your mood data? This action cannot be undone.")) {
+      localStorage.removeItem("moodHistory");
+      setMoodHistory([]);
+      
+      toast({
+        title: "Data deleted",
+        description: "All your mood data has been permanently deleted",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const badges = [
+    { name: "First Check-in", achieved: moodHistory.length > 0, icon: <Calendar className="h-3 w-3" /> },
+    { name: "5+ Check-ins", achieved: moodHistory.length >= 5, icon: <Calendar className="h-3 w-3" /> },
+    { name: "Consistency Streak", achieved: user.streak >= 3, icon: <Award className="h-3 w-3" /> },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,6 +205,19 @@ const Profile = () => {
                 <p className="text-muted-foreground mb-1">{user.email}</p>
                 <p className="text-muted-foreground mb-4">Member since {user.joinDate}</p>
                 
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {badges.map((badge, index) => (
+                    <Badge 
+                      key={index} 
+                      variant={badge.achieved ? "default" : "outline"}
+                      className={badge.achieved ? "bg-primary" : "text-muted-foreground"}
+                    >
+                      {badge.icon}
+                      <span className="ml-1">{badge.name}</span>
+                    </Badge>
+                  ))}
+                </div>
+                
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
                   <div className="bg-secondary/50 p-4 rounded-lg">
                     <h3 className="text-sm font-medium text-muted-foreground mb-1">Current Mood</h3>
@@ -159,6 +233,20 @@ const Profile = () => {
                     <h3 className="text-sm font-medium text-muted-foreground mb-1">Check-ins</h3>
                     <p className="text-xl font-semibold">{stats.checkInsCount}</p>
                   </div>
+                </div>
+                
+                <div className="mt-4 bg-calm-blue/20 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-medium">Wellness Score</h3>
+                    <span className="text-2xl font-bold">{stats.wellnessScore}</span>
+                  </div>
+                  <div className="w-full bg-secondary/50 rounded-full h-2.5">
+                    <div 
+                      className="bg-primary h-2.5 rounded-full" 
+                      style={{ width: `${Math.min(stats.wellnessScore, 100)}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm mt-1">Based on your check-ins, journaling, and streak</p>
                 </div>
                 
                 {stats.positivePercentage > 0 && (
@@ -264,10 +352,33 @@ const Profile = () => {
           <div className="card-calm mt-6">
             <h2 className="text-2xl font-bold mb-6">Data Management</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Button variant="outline">Download Mood Journal (CSV)</Button>
-              <Button variant="outline" className="text-destructive hover:text-destructive">
+              <Button 
+                variant="outline" 
+                onClick={handleDataExport}
+                className="flex items-center gap-2"
+              >
+                <Download size={16} />
+                Download Mood Journal (CSV)
+              </Button>
+              <Button 
+                variant="outline" 
+                className="text-destructive hover:text-destructive flex items-center gap-2"
+                onClick={handleDataDelete}
+              >
+                <Trash size={16} />
                 Delete All Check-in Data
               </Button>
+            </div>
+            
+            <div className="mt-6 border-t pt-6 border-border">
+              <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                <Shield size={16} />
+                <h3 className="text-sm font-medium">Data Privacy</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                All your data is stored locally on your device and is never shared with third parties.
+                You can export or delete your data at any time.
+              </p>
             </div>
           </div>
         </motion.div>

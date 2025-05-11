@@ -1,8 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { HeartHandshake } from "lucide-react";
+import JournalingPrompts from "./JournalingPrompts";
 
 interface MoodFormProps {
   onSubmit: (entry: string) => void;
@@ -12,6 +15,39 @@ interface MoodFormProps {
 const MoodForm = ({ onSubmit, isLoading }: MoodFormProps) => {
   const [entry, setEntry] = useState("");
   const [error, setError] = useState("");
+  const [showDistressAlert, setShowDistressAlert] = useState(false);
+  const [currentEmotion, setCurrentEmotion] = useState("neutral");
+
+  // Simple sentiment analysis to detect distress words
+  useEffect(() => {
+    const distressWords = [
+      "suicid", "kill myself", "end my life", "don't want to live", 
+      "better off dead", "no reason to live", "want to die", "harm myself",
+      "hurt myself", "hopeless", "worthless", "can't go on", "never get better"
+    ];
+    
+    const entryLower = entry.toLowerCase();
+    const hasDistressWords = distressWords.some(word => entryLower.includes(word));
+    
+    setShowDistressAlert(hasDistressWords);
+    
+    // Basic emotion detection for journaling prompts
+    if (entry.length > 5) {
+      const anxietyWords = ["anxious", "nervous", "worry", "stress", "tense", "panic"];
+      const sadnessWords = ["sad", "down", "depress", "lonely", "grief", "despair"];
+      const happinessWords = ["happy", "joy", "excite", "content", "great", "love", "wonderful"];
+      
+      if (anxietyWords.some(word => entryLower.includes(word))) {
+        setCurrentEmotion("anxiety");
+      } else if (sadnessWords.some(word => entryLower.includes(word))) {
+        setCurrentEmotion("sadness");
+      } else if (happinessWords.some(word => entryLower.includes(word))) {
+        setCurrentEmotion("happiness");
+      } else {
+        setCurrentEmotion("neutral");
+      }
+    }
+  }, [entry]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +69,21 @@ const MoodForm = ({ onSubmit, isLoading }: MoodFormProps) => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
+      {entry.length > 0 && (
+        <JournalingPrompts currentEmotion={currentEmotion} />
+      )}
+      
+      {showDistressAlert && (
+        <Alert variant="destructive" className="bg-destructive/20 border-destructive/50">
+          <HeartHandshake className="h-4 w-4" />
+          <AlertTitle>You're not alone</AlertTitle>
+          <AlertDescription>
+            It sounds like you're going through a difficult time. Please consider reaching out for help.
+            If you're in crisis, please call the Suicide Prevention Lifeline at 988 or text HOME to 741741 to reach the Crisis Text Line.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div>
         <Textarea
           value={entry}
