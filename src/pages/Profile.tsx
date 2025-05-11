@@ -98,9 +98,13 @@ const Profile = () => {
       entry.result.emotion.toLowerCase().includes('content')
     ).length;
     
-    // Fix: Ensure we're using numeric values for the calculation
-    const positivePercentage = moodHistory.length > 0 ? 
-      Math.round((positiveEmotions / moodHistory.length) * 100) : 0;
+    // Fix: Ensure we're using numeric values for the calculation by explicitly using Number()
+    const totalEntries = Number(moodHistory.length);
+    const positiveCount = Number(positiveEmotions);
+    
+    // Now both operands are guaranteed to be numbers
+    const positivePercentage = totalEntries > 0 ? 
+      Math.round((positiveCount / totalEntries) * 100) : 0;
     
     // Calculate wellness score
     const wellnessScore = calculateWellnessScore(moodHistory, user.streak);

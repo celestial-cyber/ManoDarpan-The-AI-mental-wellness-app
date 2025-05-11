@@ -1,6 +1,18 @@
 
+// Define a MoodEntry type to enhance type safety
+export interface MoodEntry {
+  date: string | Date;
+  entry: string;
+  result: {
+    emotion: string;
+    analysis?: string;
+    advice?: string;
+  };
+  id?: number | string;
+}
+
 // Calculate a wellness score based on mood check-ins, consistency, and journaling quality
-export const calculateWellnessScore = (moodHistory: any[], streak: number): number => {
+export const calculateWellnessScore = (moodHistory: MoodEntry[], streak: number): number => {
   if (!moodHistory.length) return 0;
   
   // Base score from number of check-ins (up to 20 points)
