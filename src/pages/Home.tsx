@@ -3,6 +3,9 @@ import { useState } from "react";
 import Navbar from "../components/Navbar";
 import MoodForm from "../components/MoodForm";
 import MoodResult from "../components/MoodResult";
+import VoiceToTextInput from "../components/VoiceToTextInput";
+import SOSButton from "../components/SOSButton";
+import AIChatCompanion from "../components/AIChatCompanion";
 import { motion } from "framer-motion";
 
 interface MoodResultData {
@@ -74,6 +77,10 @@ const Home = () => {
     setResult(null);
   };
 
+  const handleVoiceInput = (transcript: string) => {
+    setMoodEntry(transcript);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -89,7 +96,16 @@ const Home = () => {
             <h1 className="text-3xl font-bold mb-6 text-center">How are you feeling today?</h1>
             
             {!result ? (
-              <MoodForm onSubmit={handleSubmit} isLoading={isLoading} />
+              <div>
+                <MoodForm onSubmit={handleSubmit} isLoading={isLoading} />
+                
+                <div className="mt-4 flex justify-center">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Prefer to speak?</span>
+                    <VoiceToTextInput onTranscript={handleVoiceInput} />
+                  </div>
+                </div>
+              </div>
             ) : (
               <MoodResult 
                 result={result}
@@ -100,6 +116,10 @@ const Home = () => {
           </div>
         </motion.div>
       </div>
+      
+      {/* The SOS button and AI Chat companion will be available throughout the app */}
+      <SOSButton />
+      <AIChatCompanion />
     </div>
   );
 };

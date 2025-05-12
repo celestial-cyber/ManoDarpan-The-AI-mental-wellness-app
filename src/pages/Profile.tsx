@@ -5,12 +5,16 @@ import Navbar from "../components/Navbar";
 import { useToast } from "@/hooks/use-toast";
 import { MoodEntry } from "@/utils/wellnessScore";
 import { useProfileStats } from "@/hooks/use-profile-stats";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Import our new components
+// Import our components
 import UserInfoCard from "@/components/profile/UserInfoCard";
 import UserStats from "@/components/profile/UserStats";
 import MoodCharts from "@/components/profile/MoodCharts";
 import DataManagement from "@/components/profile/DataManagement";
+import PrivateNotes from "@/components/PrivateNotes";
+import SOSButton from "@/components/SOSButton";
+import AIChatCompanion from "@/components/AIChatCompanion";
 
 const Profile = () => {
   // Mock user data (would normally come from a database)
@@ -58,14 +62,30 @@ const Profile = () => {
             />
           </div>
           
-          <MoodCharts 
-            weeklyBreakdown={stats.weeklyBreakdown}
-            moodDistribution={stats.moodDistribution}
-          />
-          
-          <DataManagement moodHistory={moodHistory} />
+          <Tabs defaultValue="mood-analytics">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="mood-analytics">Mood Analytics</TabsTrigger>
+              <TabsTrigger value="private-notes">Private Notes</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="mood-analytics" className="space-y-6">
+              <MoodCharts 
+                weeklyBreakdown={stats.weeklyBreakdown}
+                moodDistribution={stats.moodDistribution}
+              />
+              
+              <DataManagement moodHistory={moodHistory} />
+            </TabsContent>
+            
+            <TabsContent value="private-notes">
+              <PrivateNotes />
+            </TabsContent>
+          </Tabs>
         </motion.div>
       </div>
+      
+      <SOSButton />
+      <AIChatCompanion />
     </div>
   );
 };
