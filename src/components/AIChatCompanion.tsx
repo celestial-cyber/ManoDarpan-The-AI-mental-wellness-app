@@ -129,27 +129,30 @@ const AIChatCompanion = () => {
     emotionDetected: string;
     severity: "mild" | "moderate" | "severe";
     topics: string[];
+    keywords: string[];
   } => {
-    // This is a simple rule-based analysis that would be replaced by a more sophisticated model in production
+    // Improved analysis that looks for specific keywords
     const lowerCase = message.toLowerCase();
     const words = lowerCase.split(/\s+/);
     
-    // Detect emotion
+    // Detect emotion with more nuanced understanding
     let emotionDetected = "neutral";
-    if (/anxious|worry|stress|panic|afraid|fear/.test(lowerCase)) {
+    if (/anxious|worry|stress|panic|afraid|fear|nervous|tense|uneasy/.test(lowerCase)) {
       emotionDetected = "anxiety";
-    } else if (/sad|depress|down|unhappy|miserable|hopeless/.test(lowerCase)) {
+    } else if (/sad|depress|down|unhappy|miserable|hopeless|blue|gloomy|lost|empty/.test(lowerCase)) {
       emotionDetected = "sadness";
-    } else if (/angry|furious|mad|upset|irritate|frustrat/.test(lowerCase)) {
+    } else if (/angry|furious|mad|upset|irritate|frustrat|rage|hate|annoyed/.test(lowerCase)) {
       emotionDetected = "anger";
-    } else if (/overwhelm|too much|cannot cope|can't handle|exhausted|burnout/.test(lowerCase)) {
+    } else if (/overwhelm|too much|cannot cope|can't handle|exhausted|burnout|tired|drained/.test(lowerCase)) {
       emotionDetected = "overwhelm";
+    } else if (/happy|joy|excited|great|good|wonderful|fantastic|amazing|positive/.test(lowerCase)) {
+      emotionDetected = "joy";
     }
     
-    // Detect severity (simple heuristic based on intensifiers and repetition)
+    // Detect severity (more comprehensive heuristic)
     let severity: "mild" | "moderate" | "severe" = "mild";
-    const intensifiers = ["very", "extremely", "really", "so", "too", "incredibly", "terribly"];
-    const severeTerms = ["suicid", "kill myself", "end my life", "don't want to live", "hurt myself", "harming myself"];
+    const intensifiers = ["very", "extremely", "really", "so", "too", "incredibly", "terribly", "absolutely", "completely", "totally"];
+    const severeTerms = ["suicid", "kill myself", "end my life", "don't want to live", "hurt myself", "harming myself", "self-harm", "die", "death"];
     
     if (severeTerms.some(term => lowerCase.includes(term))) {
       severity = "severe";
@@ -158,24 +161,34 @@ const AIChatCompanion = () => {
       severity = "moderate";
     }
     
-    // Detect topics
+    // Detect topics - expanded list
     const topics = [];
-    if (/work|job|boss|colleague|career/.test(lowerCase)) topics.push("work");
-    if (/relationship|partner|spouse|boyfriend|girlfriend|dating/.test(lowerCase)) topics.push("relationships");
-    if (/family|parent|child|sibling|mother|father/.test(lowerCase)) topics.push("family");
-    if (/health|sick|illness|disease|pain|doctor/.test(lowerCase)) topics.push("health");
-    if (/money|financial|debt|afford|expensive|bills/.test(lowerCase)) topics.push("finances");
+    if (/work|job|boss|colleague|career|profession|workplace|unemploy|coworker/.test(lowerCase)) topics.push("work");
+    if (/relationship|partner|spouse|boyfriend|girlfriend|dating|marriage|love|divorce|breakup/.test(lowerCase)) topics.push("relationships");
+    if (/family|parent|child|sibling|mother|father|son|daughter|brother|sister/.test(lowerCase)) topics.push("family");
+    if (/health|sick|illness|disease|pain|doctor|hospital|medication|symptom|diagnosis/.test(lowerCase)) topics.push("health");
+    if (/money|financial|debt|afford|expensive|bills|payment|income|saving|budget/.test(lowerCase)) topics.push("finances");
+    if (/school|college|university|study|exam|homework|grade|professor|student|class/.test(lowerCase)) topics.push("education");
+    if (/friend|social|lonely|alone|isolat|connection|community|belong/.test(lowerCase)) topics.push("social");
+    
+    // Extract specific keywords for more contextual responses
+    const keywords = words.filter(word => 
+      word.length > 3 && 
+      !["that", "this", "then", "than", "with", "would", "could", "should", "have", "what", "when"].includes(word)
+    );
     
     return {
       emotionDetected,
       severity,
       topics: topics.length ? topics : ["general"],
+      keywords: keywords.slice(0, 5) // Take top 5 meaningful keywords
     };
   };
 
+  // This function creates a more personalized response based on what the user said
   const getAIResponse = (userMessage: string): Message => {
     const analysis = analyzeMessage(userMessage);
-    const { emotionDetected, severity, topics } = analysis;
+    const { emotionDetected, severity, topics, keywords } = analysis;
     
     // Determine response category
     let category: "support" | "coping" | "education" | "referral" = "support";
@@ -190,33 +203,89 @@ const AIChatCompanion = () => {
         "Would you like me to share some resources where you can get immediate help?";
       suggestedResponses = ["Yes, please share resources", "I'm not ready for that yet", "How can I cope right now?"];
     } 
-    // For moderate cases, provide coping strategies
+    // For moderate cases, provide coping strategies tailored to their specific situation
     else if (severity === "moderate") {
       category = "coping";
       const strategies = COPING_STRATEGIES[emotionDetected as keyof typeof COPING_STRATEGIES] || COPING_STRATEGIES.anxiety;
       const randomStrategies = strategies.sort(() => 0.5 - Math.random()).slice(0, 2);
       
-      responseText = `I hear that you're feeling ${emotionDetected !== "neutral" ? emotionDetected : "upset"} about ${topics.join(" and ")}. ` +
+      let topicSpecificResponse = "";
+      if (topics.includes("work")) {
+        topicSpecificResponse = "work situation";
+      } else if (topics.includes("relationships")) {
+        topicSpecificResponse = "relationship challenges";
+      } else if (topics.includes("family")) {
+        topicSpecificResponse = "family situation";
+      } else if (topics.includes("health")) {
+        topicSpecificResponse = "health concerns";
+      } else if (topics.includes("finances")) {
+        topicSpecificResponse = "financial pressures";
+      } else if (topics.includes("education")) {
+        topicSpecificResponse = "academic stress";
+      } else if (topics.includes("social")) {
+        topicSpecificResponse = "social challenges";
+      } else {
+        topicSpecificResponse = "what you're going through";
+      }
+      
+      responseText = `I understand that you're feeling ${emotionDetected !== "neutral" ? emotionDetected : "upset"} about your ${topicSpecificResponse}. ` +
         `Here are a couple of strategies that might help:\n\n• ${randomStrategies.join("\n• ")}\n\nWould you like to try one of these, or would you prefer to talk more about how you're feeling?`;
-      suggestedResponses = ["Tell me more strategies", "Let's talk about something else", "Why do these strategies work?"];
+      
+      // Tailor suggested responses to their situation
+      suggestedResponses = [
+        "Tell me more strategies", 
+        `Can you help me with my ${topics[0] || "situation"}?`,
+        "Why do these strategies work?"
+      ];
     }
-    // For mild cases, provide educational content or supportive response
+    // For joy/positive emotions
+    else if (emotionDetected === "joy") {
+      category = "support";
+      const positiveResponses = [
+        `That's wonderful to hear! What's contributing to your positive feelings today?`,
+        `I'm so glad you're feeling good! What activities have been helping you maintain this positive state?`,
+        `It's great that you're feeling this way! Would you like to talk about how to maintain these positive feelings?`
+      ];
+      responseText = positiveResponses[Math.floor(Math.random() * positiveResponses.length)];
+      suggestedResponses = ["Share what's working for me", "How to maintain this mood", "I'd like to help others feel this way"];
+    }
+    // For mild cases or neutral emotions, provide educational content or supportive response
     else {
-      if (Math.random() > 0.5 && emotionDetected !== "neutral" && EDUCATIONAL_CONTENT[emotionDetected as keyof typeof EDUCATIONAL_CONTENT]) {
+      // Decide if we should be educational or just supportive based on their message
+      if (userMessage.includes("?") || userMessage.toLowerCase().includes("what") || userMessage.toLowerCase().includes("how") || 
+          userMessage.toLowerCase().includes("why") || userMessage.toLowerCase().includes("learn") || userMessage.toLowerCase().includes("understand")) {
         category = "education";
-        const content = EDUCATIONAL_CONTENT[emotionDetected as keyof typeof EDUCATIONAL_CONTENT];
-        responseText = `It sounds like you're experiencing some ${emotionDetected}. ${content.content.substring(0, 100)}... Would you like to learn more about ${emotionDetected} and how to manage it?`;
-        suggestedResponses = ["Yes, tell me more", "How can I cope with this?", "Not right now"];
+        let content;
+        
+        // Try to match their question with educational content
+        if (emotionDetected !== "neutral" && EDUCATIONAL_CONTENT[emotionDetected as keyof typeof EDUCATIONAL_CONTENT]) {
+          content = EDUCATIONAL_CONTENT[emotionDetected as keyof typeof EDUCATIONAL_CONTENT];
+          responseText = `It sounds like you're interested in learning about ${emotionDetected}. ${content.content.substring(0, 150)}... Would you like to know more?`;
+        } else {
+          // Generic educational response
+          responseText = `That's an interesting question. I can provide information on topics like anxiety, depression, stress, or coping strategies. What specifically would you like to learn more about?`;
+        }
+        
+        suggestedResponses = ["Tell me about coping strategies", "I'd like to understand my emotions better", "How can I improve my mental health?"];
       } else {
         category = "support";
+        // Extract what they shared to personalize response
+        const topicMentioned = topics[0] !== "general" ? topics[0] : (keywords.length > 0 ? keywords[0] : "that");
+        
         const supportResponses = [
-          `Thank you for sharing that with me. How long have you been feeling this way?`,
-          `I appreciate you opening up. What do you think triggered these feelings?`,
-          `I'm here to listen. Would it help to talk more about what's going on?`,
-          `That sounds challenging. What has helped you cope with similar feelings in the past?`
+          `Thank you for sharing about your ${topicMentioned}. How long have you been feeling this way?`,
+          `I appreciate you opening up. What do you think triggered these feelings about ${topicMentioned}?`,
+          `I'm here to listen. Would it help to talk more specifically about your ${topicMentioned}?`,
+          `That sounds challenging. What has helped you cope with similar feelings about ${topicMentioned} in the past?`
         ];
         responseText = supportResponses[Math.floor(Math.random() * supportResponses.length)];
-        suggestedResponses = ["I'm not sure", "Let me think about it", "Can you suggest something?"];
+        
+        // Generate suggested responses based on their message
+        suggestedResponses = [
+          "I'm not sure how to explain", 
+          `It started when...`, 
+          `Can you suggest something for my ${topicMentioned}?`
+        ];
       }
     }
     
@@ -246,7 +315,7 @@ const AIChatCompanion = () => {
     // Show typing indicator
     setIsTyping(true);
     
-    // Simulate AI response after a delay
+    // Generate AI response after a delay
     setTimeout(() => {
       const aiResponse = getAIResponse(userMessage.text);
       setMessages((prev) => [...prev, aiResponse]);
@@ -267,7 +336,7 @@ const AIChatCompanion = () => {
     // Show typing indicator
     setIsTyping(true);
     
-    // Simulate AI response after a delay
+    // Generate AI response after a delay
     setTimeout(() => {
       const aiResponse = getAIResponse(response);
       setMessages((prev) => [...prev, aiResponse]);
