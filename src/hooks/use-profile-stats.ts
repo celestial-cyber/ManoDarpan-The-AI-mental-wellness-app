@@ -1,4 +1,3 @@
-
 import { useMemo } from "react";
 import { MoodEntry, calculateWellnessScore } from "@/utils/wellnessScore";
 
@@ -21,7 +20,11 @@ export function useProfileStats(moodHistory: MoodEntry[], userStreak: number) {
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     
-    const currentMood = sortedHistory[0];
+    // Map the MoodEntry to the expected currentMood shape
+    const currentMood = {
+      emotion: sortedHistory[0].result.emotion,
+      date: new Date(sortedHistory[0].date)
+    };
     
     // Most frequent emotion
     const emotionCounts = moodHistory.reduce((acc, entry) => {
