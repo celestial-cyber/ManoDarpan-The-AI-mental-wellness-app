@@ -15,8 +15,10 @@ const Index = () => {
 
   // This would normally connect to a backend authentication service
   // For this demo we'll simulate checking username uniqueness and authentication
-  const handleAuth = async (email: string, password: string, username?: string) => {
-    console.log("Auth attempt with:", email, password, username ? `username: ${username}` : "");
+  const handleAuth = async (email: string, password: string, username?: string, fullName?: string) => {
+    console.log("Auth attempt with:", email, password, 
+      username ? `username: ${username}` : "", 
+      fullName ? `fullName: ${fullName}` : "");
     
     // Only check username during signup
     if (!isLogin && username) {
@@ -48,13 +50,15 @@ const Index = () => {
         localStorage.setItem("currentUser", JSON.stringify({
           email,
           username,
+          name: fullName || username,
           joinDate: new Date().toLocaleDateString(),
           avatar: "",
+          streak: Math.floor(Math.random() * 5) + 1, // Random streak between 1-5 for demo
         }));
         
         toast({
           title: "Account created!",
-          description: `Welcome, ${username}!`,
+          description: `Welcome, ${fullName || username}!`,
         });
         
         navigate("/home");
@@ -76,15 +80,17 @@ const Index = () => {
       const mockUser = {
         email,
         username: email.split('@')[0], // Use part of email as username for demo login
+        name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1), // Capitalize first letter
         joinDate: "May 2023",
         avatar: "",
+        streak: Math.floor(Math.random() * 5) + 1, // Random streak between 1-5 for demo
       };
       
       localStorage.setItem("currentUser", JSON.stringify(mockUser));
       
       toast({
         title: "Login successful",
-        description: `Welcome back, ${mockUser.username}!`,
+        description: `Welcome back, ${mockUser.name}!`,
       });
       
       // For demo purposes, any login is successful

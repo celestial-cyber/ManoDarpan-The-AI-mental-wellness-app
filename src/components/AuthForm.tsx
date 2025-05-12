@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 interface AuthFormProps {
   isLogin: boolean;
-  onSubmit: (email: string, password: string, username?: string) => void;
+  onSubmit: (email: string, password: string, username?: string, fullName?: string) => void;
 }
 
 const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
@@ -15,8 +15,10 @@ const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
   const [usernameError, setUsernameError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const validateUsername = (value: string) => {
     setUsernameError("");
@@ -44,13 +46,30 @@ const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
     return true;
   };
 
+  const validateName = (value: string) => {
+    setNameError("");
+    
+    if (!value && !isLogin) {
+      setNameError("Full name is required");
+      return false;
+    }
+    
+    if (!isLogin && value.length < 2) {
+      setNameError("Name must be at least 2 characters");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setUsernameError("");
+    setNameError("");
     
     if (!email || !password) {
-      setError("Please fill in all fields");
+      setError("Please fill in all required fields");
       return;
     }
     
@@ -62,8 +81,12 @@ const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
     if (!isLogin && !validateUsername(username)) {
       return;
     }
+
+    if (!isLogin && !validateName(fullName)) {
+      return;
+    }
     
-    onSubmit(email, password, !isLogin ? username : undefined);
+    onSubmit(email, password, !isLogin ? username : undefined, !isLogin ? fullName : undefined);
   };
 
   return (
@@ -74,6 +97,29 @@ const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
       transition={{ duration: 0.3 }}
     >
       <div className="space-y-4">
+        {!isLogin && (
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input
+              id="fullName"
+              type="text"
+              placeholder="John Doe"
+              value={fullName}
+              onChange={(e) => {
+                setFullName(e.target.value);
+                validateName(e.target.value);
+              }}
+              className="calm-input"
+              required={!isLogin}
+            />
+            {nameError && (
+              <div className="text-sm font-medium text-destructive">
+                {nameError}
+              </div>
+            )}
+          </div>
+        )}
+
         {!isLogin && (
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>

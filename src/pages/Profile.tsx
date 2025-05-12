@@ -27,11 +27,12 @@ const Profile = () => {
       return JSON.parse(storedUser);
     }
     return {
-      name: "Alex Johnson",
-      email: "alex@example.com",
-      joinDate: "May 2023",
+      name: "Guest User",
+      email: "guest@example.com",
+      joinDate: new Date().toLocaleDateString(),
       avatar: "", // Empty string will trigger the fallback
-      streak: 4
+      streak: 0,
+      username: "guest_user"
     };
   });
 
