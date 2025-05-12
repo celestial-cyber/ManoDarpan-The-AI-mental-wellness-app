@@ -1,16 +1,29 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Home, History as HistoryIcon, User, LayoutDashboard } from "lucide-react";
+import { Menu, X, Home, History as HistoryIcon, User, LayoutDashboard, LogOut } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Get user info from localStorage
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, [location.pathname]); // Re-check when route changes
 
   const menuItems = [
     { name: "Check-in", path: "/home", icon: <Home className="h-5 w-5" /> },
@@ -18,6 +31,20 @@ const Navbar = () => {
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: "Profile", path: "/profile", icon: <User className="h-5 w-5" /> },
   ];
+  
+  const handleLogout = () => {
+    // In a real app with Supabase, you would call supabase.auth.signOut()
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out"
+    });
+    
+    // Clear localStorage items that contain user data
+    localStorage.removeItem("currentUser");
+    
+    // Redirect to login page
+    navigate("/");
+  };
 
   return (
     <nav className="bg-background border-b border-border">
@@ -30,8 +57,8 @@ const Navbar = () => {
           </div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-1">
+          <div className="hidden md:flex items-center">
+            <div className="flex items-center space-x-1 mr-4">
               {menuItems.map(item => (
                 <Link 
                   key={item.path} 
@@ -55,6 +82,27 @@ const Navbar = () => {
                 </Link>
               ))}
             </div>
+            
+            {user && (
+              <div className="flex items-center gap-3 ml-4">
+                <div className="text-sm">
+                  <span className="font-medium">@{user.username || user.name?.split(' ')[0].toLowerCase()}</span>
+                </div>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                    {user.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-destructive" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">
@@ -94,6 +142,30 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {user && (
+              <div className="flex items-center justify-between px-3 py-2 mt-2 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                      {user.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">
+                    @{user.username || user.name?.split(' ')[0].toLowerCase()}
+                  </span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground" 
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Logout
+                </Button>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

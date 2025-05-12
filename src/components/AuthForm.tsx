@@ -7,18 +7,47 @@ import { motion } from "framer-motion";
 
 interface AuthFormProps {
   isLogin: boolean;
-  onSubmit: (email: string, password: string) => void;
+  onSubmit: (email: string, password: string, username?: string) => void;
 }
 
 const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [error, setError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+
+  const validateUsername = (value: string) => {
+    setUsernameError("");
+    
+    if (!value && !isLogin) {
+      setUsernameError("Username is required");
+      return false;
+    }
+    
+    if (!isLogin && value.length < 3) {
+      setUsernameError("Username must be at least 3 characters");
+      return false;
+    }
+    
+    if (!isLogin && value.length > 20) {
+      setUsernameError("Username must be less than 20 characters");
+      return false;
+    }
+    
+    if (!isLogin && !/^[a-zA-Z0-9_]+$/.test(value)) {
+      setUsernameError("Username can only contain letters, numbers, and underscores");
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setUsernameError("");
     
     if (!email || !password) {
       setError("Please fill in all fields");
@@ -30,7 +59,11 @@ const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
       return;
     }
     
-    onSubmit(email, password);
+    if (!isLogin && !validateUsername(username)) {
+      return;
+    }
+    
+    onSubmit(email, password, !isLogin ? username : undefined);
   };
 
   return (
@@ -41,6 +74,29 @@ const AuthForm = ({ isLogin, onSubmit }: AuthFormProps) => {
       transition={{ duration: 0.3 }}
     >
       <div className="space-y-4">
+        {!isLogin && (
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="your_username"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                validateUsername(e.target.value);
+              }}
+              className="calm-input"
+              required={!isLogin}
+            />
+            {usernameError && (
+              <div className="text-sm font-medium text-destructive">
+                {usernameError}
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input

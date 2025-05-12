@@ -5,17 +5,91 @@ import { motion } from "framer-motion";
 import AuthForm from "../components/AuthForm";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "../components/ThemeToggle";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // This would normally connect to a backend authentication service
-  // For this demo we'll just navigate to the home page
-  const handleAuth = (email: string, password: string) => {
-    console.log("Auth attempt with:", email, password);
-    // For demo purposes, any login/signup is successful
-    navigate("/home");
+  // For this demo we'll simulate checking username uniqueness and authentication
+  const handleAuth = async (email: string, password: string, username?: string) => {
+    console.log("Auth attempt with:", email, password, username ? `username: ${username}` : "");
+    
+    // Only check username during signup
+    if (!isLogin && username) {
+      setIsCheckingUsername(true);
+      
+      try {
+        // Simulate checking username against Supabase
+        // In a real app, this would be a Supabase query
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network request
+        
+        // Simulate username is taken 20% of the time for demo purposes
+        const isUsernameTaken = Math.random() < 0.2;
+        
+        if (isUsernameTaken) {
+          toast({
+            title: "Username already taken",
+            description: "Please try another username",
+            variant: "destructive",
+          });
+          setIsCheckingUsername(false);
+          return;
+        }
+        
+        // Username is available, proceed with signup
+        console.log("Username is available:", username);
+        
+        // Here you would store the user data including username in Supabase
+        // For this demo, simulate successful signup and store in localStorage
+        localStorage.setItem("currentUser", JSON.stringify({
+          email,
+          username,
+          joinDate: new Date().toLocaleDateString(),
+          avatar: "",
+        }));
+        
+        toast({
+          title: "Account created!",
+          description: `Welcome, ${username}!`,
+        });
+        
+        navigate("/home");
+      } catch (error) {
+        console.error("Error checking username:", error);
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    } else {
+      // For login, simulate successful login
+      // In a real app, this would verify credentials in Supabase
+      
+      // For demo, simulate existing user data
+      const mockUser = {
+        email,
+        username: email.split('@')[0], // Use part of email as username for demo login
+        joinDate: "May 2023",
+        avatar: "",
+      };
+      
+      localStorage.setItem("currentUser", JSON.stringify(mockUser));
+      
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${mockUser.username}!`,
+      });
+      
+      // For demo purposes, any login is successful
+      navigate("/home");
+    }
   };
 
   return (

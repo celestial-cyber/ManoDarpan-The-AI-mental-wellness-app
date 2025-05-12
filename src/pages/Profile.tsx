@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { MoodEntry } from "@/utils/wellnessScore";
 import { useProfileStats } from "@/hooks/use-profile-stats";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Import our components
 import UserInfoCard from "@/components/profile/UserInfoCard";
@@ -17,18 +20,25 @@ import SOSButton from "@/components/SOSButton";
 import AIChatCompanion from "@/components/AIChatCompanion";
 
 const Profile = () => {
-  // Mock user data (would normally come from a database)
-  const [user] = useState({
-    name: "Alex Johnson",
-    email: "alex@example.com",
-    joinDate: "May 2023",
-    avatar: "", // Empty string will trigger the fallback
-    streak: 4
+  // Get user data from localStorage
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+    return {
+      name: "Alex Johnson",
+      email: "alex@example.com",
+      joinDate: "May 2023",
+      avatar: "", // Empty string will trigger the fallback
+      streak: 4
+    };
   });
 
   // Fetch mood history from localStorage
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Fetch mood history from localStorage
@@ -38,6 +48,26 @@ const Profile = () => {
 
   // Use our new hook to get profile stats
   const stats = useProfileStats(moodHistory, user.streak);
+  
+  const handleUpdateUser = (userData: Partial<typeof user>) => {
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+  };
+  
+  const handleLogout = () => {
+    // In a real app with Supabase, you would call supabase.auth.signOut()
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out"
+    });
+    
+    // Clear localStorage items that contain user data
+    localStorage.removeItem("currentUser");
+    
+    // Redirect to login page
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,7 +81,19 @@ const Profile = () => {
           className="max-w-4xl mx-auto"
         >
           <div className="card-calm mb-6">
-            <UserInfoCard user={user} moodHistory={moodHistory} />
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold">Your Profile</h2>
+              <Button variant="outline" className="flex items-center gap-2" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+            
+            <UserInfoCard 
+              user={user} 
+              moodHistory={moodHistory}
+              onUpdateUser={handleUpdateUser}
+            />
             
             <UserStats 
               currentMood={stats.currentMood}
