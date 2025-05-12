@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -12,7 +11,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sleep, Droplet, Sun, Activity } from "lucide-react";
+import { Moon, Droplet, Sun, Activity } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Habit {
@@ -32,7 +31,7 @@ const HabitTracker = () => {
     {
       id: "sleep",
       name: "Sleep",
-      icon: <Sleep className="h-4 w-4" />,
+      icon: <Moon className="h-4 w-4" />,
       value: 7,
       unit: "hours",
       target: 8,

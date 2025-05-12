@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
@@ -24,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useProfileStats } from "@/hooks/use-profile-stats";
-import { Translate, Language } from "lucide-react";
+import { Globe, Languages } from "lucide-react";
 
 const Dashboard = () => {
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
@@ -110,7 +109,7 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold">{t.dashboard}</h1>
             
             <div className="flex items-center gap-2">
-              <Language className="h-4 w-4 text-muted-foreground" />
+              <Languages className="h-4 w-4 text-muted-foreground" />
               <Select
                 value={language}
                 onValueChange={setLanguage}

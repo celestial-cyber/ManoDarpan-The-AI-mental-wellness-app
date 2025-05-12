@@ -16,33 +16,35 @@ const VoiceToTextInput = ({ onTranscript }: VoiceToTextInputProps) => {
   useEffect(() => {
     // Check if browser supports speech recognition
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      
-      recognitionInstance.continuous = true;
-      recognitionInstance.interimResults = true;
-      recognitionInstance.lang = 'en-US';
-      
-      recognitionInstance.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join(' ');
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognitionAPI) {
+        const recognitionInstance = new SpeechRecognitionAPI();
         
-        onTranscript(transcript);
-      };
-      
-      recognitionInstance.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
-        setIsRecording(false);
-        toast({
-          title: "Error",
-          description: `Microphone error: ${event.error}`,
-          variant: "destructive"
-        });
-      };
-      
-      setRecognition(recognitionInstance);
+        recognitionInstance.continuous = true;
+        recognitionInstance.interimResults = true;
+        recognitionInstance.lang = 'en-US';
+        
+        recognitionInstance.onresult = (event) => {
+          const transcript = Array.from(event.results)
+            .map(result => result[0])
+            .map(result => result.transcript)
+            .join(' ');
+          
+          onTranscript(transcript);
+        };
+        
+        recognitionInstance.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          setIsRecording(false);
+          toast({
+            title: "Error",
+            description: `Microphone error: ${event.error}`,
+            variant: "destructive"
+          });
+        };
+        
+        setRecognition(recognitionInstance);
+      }
     } else {
       toast({
         title: "Feature not available",
