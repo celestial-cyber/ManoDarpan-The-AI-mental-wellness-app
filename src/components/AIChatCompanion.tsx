@@ -178,6 +178,34 @@ const REFLECTION_QUESTIONS = [
   "What would help you feel even slightly better about {context} in this moment?"
 ];
 
+// Breathing exercises for immediate support
+const QUICK_BREATHING_EXERCISES = [
+  {
+    name: "Box Breathing",
+    instructions: "Inhale for 4 counts, hold for 4, exhale for 4, hold for 4. Repeat 5 times.",
+    benefits: "Helps regulate the nervous system and reduce anxiety"
+  },
+  {
+    name: "4-7-8 Breathing",
+    instructions: "Inhale for 4 counts, hold for 7, exhale for 8. Repeat 4 times.",
+    benefits: "Promotes relaxation and can help with falling asleep"
+  },
+  {
+    name: "Mindful Breath Awareness",
+    instructions: "Simply notice your natural breathing for 1 minute, without trying to change it.",
+    benefits: "Brings you into the present moment and reduces racing thoughts"
+  }
+];
+
+// Grounding techniques for moments of distress
+const GROUNDING_TECHNIQUES = [
+  "5-4-3-2-1 Technique: Name 5 things you can see, 4 things you can touch, 3 things you can hear, 2 things you can smell, and 1 thing you can taste.",
+  "Hold a piece of ice in your hand and focus on the sensation as it melts.",
+  "Name all the colors you can see in your surroundings right now.",
+  "Place both feet firmly on the ground and notice the sensation of being supported.",
+  "Gently trace the outline of your hand with your finger, focusing on the physical sensation."
+];
+
 const AIChatCompanion = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("chat");
@@ -197,6 +225,10 @@ const AIChatCompanion = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedBreathingExercise, setSelectedBreathingExercise] = useState<null | number>(null);
+  const [showJournalPrompt, setShowJournalPrompt] = useState(false);
+  const [journalEntry, setJournalEntry] = useState("");
+  const [journalPrompt, setJournalPrompt] = useState("");
   const [conversationContext, setConversationContext] = useState<{
     primaryEmotion: string;
     context: string;
@@ -317,7 +349,9 @@ const AIChatCompanion = () => {
       selfEsteem: /confidence|self-esteem|worth|value|failure|success|achievement|comparison|not good enough|inadequate|proud|disappointed in myself|body image|self-image|self-perception|self-doubt/i,
       grief: /grief|loss|death|died|passed away|gone|missing|bereavement|funeral|deceased|memorial|mourn|grieve|remembrance|anniversary|legacy|coping with loss|widowed/i,
       trauma: /trauma|abuse|assault|violence|ptsd|flashback|trigger|nightmare|terrifying|incident|accident|victim|survivor|recovery|processing|healing|coping|violent|catastrophic/i,
-      substance: /addict|alcohol|drunk|drinking|drug|substance|using|sober|recovery|relapse|high|withdrawal|dependency|habit|coping mechanism|self-medication/i
+      substance: /addict|alcohol|drunk|drinking|drug|substance|using|sober|recovery|relapse|high|withdrawal|dependency|habit|coping mechanism|self-medication/i,
+      focus: /focus|concentrate|distract|attention|mind wander|scattered|forgetful|productivity|procrastinate|getting things done|brain fog|memory issues|spacing out|zoning out/i,
+      sleep: /sleep|insomnia|nightmare|tired|exhausted|rest|awake|bed|nap|dream|snore|fatigue|drowsy|waking up|staying asleep|falling asleep|sleep quality|sleep pattern/i
     };
     
     const topics: string[] = [];
@@ -544,46 +578,4 @@ const AIChatCompanion = () => {
       // Get appropriate coping strategies based on detected emotion
       const strategies = COPING_STRATEGIES[emotionDetected as keyof typeof COPING_STRATEGIES] || COPING_STRATEGIES.anxiety;
       
-      // Select strategies most relevant to the user's context and topics
-      const relevantStrategies = strategies
-        .sort(() => 0.5 - Math.random()) // Shuffle strategies
-        .slice(0, 2); // Take 2 random strategies
-      
-      // Build a multi-part emotionally intelligent response that mirrors user language
-      responseText = `${emotionResponse} ${specificReference}${validationPhrase}\n\nWould you like to try one of these approaches that others have found helpful when dealing with similar feelings?\n\n• ${relevantStrategies.join("\n• ")}\n\nOr we can continue talking about what's on your mind. What feels right to you?`;
-      
-      // Personalized suggested responses based on user's context
-      suggestedResponses = [
-        "I'll try one of those strategies", 
-        "Can you tell me why this might help?",
-        "I need something different",
-        "Let's keep talking instead"
-      ];
-    }
-    // For joy/positive emotions - celebrate and build on positivity
-    else if (emotionDetected === "joy") {
-      category = "support";
-      
-      const joyResponses = EMOTIONAL_RESPONSES.joy;
-      const joyResponse = joyResponses[Math.floor(Math.random() * joyResponses.length)]
-        .replace("{context}", updatedContext.context);
-      
-      // For positive emotions, focus on savoring and building on them
-      const reflectionQuestions = [
-        `What specifically about ${updatedContext.context} brings you the most joy?`,
-        `How might you carry this positive feeling into other parts of your life?`,
-        `What does this happiness around ${updatedContext.context} tell you about what matters to you?`,
-        `If you could bottle this feeling, what would you label it?`
-      ];
-      
-      // Reference something specific from their message
-      let specificReference = "";
-      if (keywords.length > 0) {
-        specificReference = `I notice how ${keywords[0]} seems to be an important part of this positive experience. `;
-      }
-      
-      const randomQuestion = reflectionQuestions[Math.floor(Math.random() * reflectionQuestions.length)];
-      
-      responseText = `${joyResponse} ${specificReference}Positive emotions like this are worth savoring and understanding. ${randomQuestion}`;
-      
-      suggest
+      // Select strategies most relevant to the user
