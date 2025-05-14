@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, SendIcon, Info, Book, Volume } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -579,3 +580,467 @@ const AIChatCompanion = () => {
       const strategies = COPING_STRATEGIES[emotionDetected as keyof typeof COPING_STRATEGIES] || COPING_STRATEGIES.anxiety;
       
       // Select strategies most relevant to the user
+      const strategy1 = strategies[0];
+      const strategy2 = strategies[1];
+      
+      responseText = `${emotionResponse} ${validationPhrase} ${specificReference}` +
+        `Would you like to try a technique that might help with these feelings? ` +
+        `One approach is to ${strategy1.toLowerCase()}. Or you could ${strategy2.toLowerCase()}.`;
+      
+      suggestedResponses = [
+        "I'd like to try a breathing exercise", 
+        "Tell me more coping strategies", 
+        "I just need someone to listen",
+        "What causes these feelings?"
+      ];
+    }
+    // For educational content when user is asking questions or showing curiosity
+    else if (intent === "asking_question" || updatedContext.responseStyle === "educational" || topics.some(t => Object.keys(EDUCATIONAL_CONTENT).includes(t))) {
+      category = "education";
+      
+      // Find relevant educational content based on topics and emotions
+      const relevantTopic = topics.find(topic => Object.keys(EDUCATIONAL_CONTENT).includes(topic)) || 
+                          (emotionDetected !== "neutral" && Object.keys(EDUCATIONAL_CONTENT).includes(emotionDetected)) ? 
+                          emotionDetected : "anxiety"; // default to anxiety if no match
+      
+      // Get educational content for the topic
+      const content = EDUCATIONAL_CONTENT[relevantTopic as keyof typeof EDUCATIONAL_CONTENT];
+      
+      responseText = `I understand you'd like to learn more about this. ${content.title}: ${content.content.substring(0, 200)}... ` +
+        `Would you like to know more about ${relevantTopic}, including ways to manage it?`;
+      
+      suggestedResponses = [
+        "Yes, tell me more", 
+        "What are some coping strategies?", 
+        "How common is this experience?",
+        "Let's talk about something else"
+      ];
+    }
+    // Default to supportive, reflective response
+    else {
+      category = "support";
+      
+      // Get reflective questions to encourage deeper exploration
+      const reflectionQs = REFLECTION_QUESTIONS;
+      
+      // Personalize reflection question with user's context
+      const reflectionQ = reflectionQs[Math.floor(Math.random() * reflectionQs.length)]
+        .replace("{context}", updatedContext.context);
+      
+      // Get emotional validation with context awareness
+      const emotionResponses = EMOTIONAL_RESPONSES[emotionDetected as keyof typeof EMOTIONAL_RESPONSES] || EMOTIONAL_RESPONSES.neutral;
+      
+      // Select response template and personalize with user's own words/context
+      const emotionResponse = emotionResponses[Math.floor(Math.random() * emotionResponses.length)]
+        .replace("{context}", updatedContext.context);
+      
+      responseText = `${emotionResponse} ${reflectionQ}`;
+      
+      suggestedResponses = [
+        "Actually, I'd like to try a breathing exercise", 
+        "Can you suggest some coping strategies?", 
+        "I'd like to learn more about these feelings",
+        "I just want to continue talking"
+      ];
+    }
+    
+    // Create the AI response message object
+    return {
+      id: `ai-${Date.now()}`,
+      text: responseText,
+      sender: "ai",
+      timestamp: new Date(),
+      category,
+      suggestedResponses
+    };
+  };
+
+  // Scroll to bottom of chat when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // Handle sending a new message
+  const handleSendMessage = () => {
+    if (!inputValue.trim()) return;
+
+    // Add the user message
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      text: inputValue,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+
+    // Simulate AI thinking
+    setIsTyping(true);
+
+    // Generate AI response with slight delay to feel more natural
+    setTimeout(() => {
+      const aiResponse = getAIResponse(userMessage.text);
+      setMessages((prev) => [...prev, aiResponse]);
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  // Handle clicking on a suggested response
+  const handleSuggestedResponse = (response: string) => {
+    // Add the user message
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      text: response,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Simulate AI thinking
+    setIsTyping(true);
+
+    // Generate AI response with slight delay to feel more natural
+    setTimeout(() => {
+      const aiResponse = getAIResponse(response);
+      setMessages((prev) => [...prev, aiResponse]);
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  // Handle form submission
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSendMessage();
+  };
+
+  // Handle breathing exercise selection
+  const handleBreathingExerciseSelect = (index: number) => {
+    setSelectedBreathingExercise(index);
+  };
+
+  // Generate a journal prompt based on current conversation context
+  const generateJournalPrompt = () => {
+    const prompts = [
+      `How did your feelings about ${conversationContext.context} change throughout the day?`,
+      `What are three things that triggered your ${conversationContext.primaryEmotion} today?`,
+      `If your ${conversationContext.primaryEmotion} could speak, what would it say to you?`,
+      `Write about a time when you successfully managed similar feelings of ${conversationContext.primaryEmotion}.`,
+      `What would you tell a friend who was experiencing the same ${conversationContext.primaryEmotion} about ${conversationContext.context}?`,
+    ];
+
+    return prompts[Math.floor(Math.random() * prompts.length)];
+  };
+
+  // Handle journal prompt generation
+  const handleShowJournalPrompt = () => {
+    const prompt = generateJournalPrompt();
+    setJournalPrompt(prompt);
+    setShowJournalPrompt(true);
+  };
+
+  // Save journal entry
+  const handleSaveJournalEntry = () => {
+    if (journalEntry.trim()) {
+      toast({
+        title: "Journal Entry Saved",
+        description: "Your thoughts have been recorded.",
+      });
+    }
+    setShowJournalPrompt(false);
+    setJournalEntry("");
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed bottom-6 right-6 rounded-full w-14 h-14 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 z-50 md:bottom-8 md:right-8"
+        onClick={() => setIsOpen(true)}
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[425px] max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-xl font-bold flex items-center">
+              <Avatar className="h-8 w-8 bg-primary/20 mr-2">
+                <MessageCircle className="h-4 w-4 text-primary" />
+              </Avatar>
+              Mano: AI Wellness Companion
+            </DialogTitle>
+            <DialogDescription>
+              A supportive space to reflect and find mental wellness resources.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="chat" value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <div className="border-b px-6">
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="chat" className="flex items-center">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Chat
+                </TabsTrigger>
+                <TabsTrigger value="resources" className="flex items-center">
+                  <Book className="h-4 w-4 mr-2" />
+                  Resources
+                </TabsTrigger>
+                <TabsTrigger value="exercises" className="flex items-center">
+                  <Volume className="h-4 w-4 mr-2" />
+                  Exercises
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent
+              value="chat"
+              className="flex-1 flex flex-col px-4 py-3 overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex items-start ${
+                      message.sender === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {message.sender === "ai" && (
+                      <Avatar className="mt-0.5 h-8 w-8 mr-2 bg-primary/20">
+                        <MessageCircle className="h-4 w-4 text-primary" />
+                      </Avatar>
+                    )}
+
+                    <div
+                      className={`rounded-lg p-3 max-w-[75%] ${
+                        message.sender === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <p className="text-sm">{message.text}</p>
+                      {message.sender === "ai" && message.suggestedResponses && (
+                        <div className="mt-2 space-y-1.5">
+                          {message.suggestedResponses.map((response, idx) => (
+                            <button
+                              key={idx}
+                              className="text-xs bg-background text-foreground px-2 py-1 rounded-md w-full text-left hover:bg-accent transition-colors"
+                              onClick={() => handleSuggestedResponse(response)}
+                            >
+                              {response}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {message.sender === "user" && (
+                      <Avatar className="mt-0.5 h-8 w-8 ml-2 bg-primary">
+                        <span className="text-xs text-primary-foreground">You</span>
+                      </Avatar>
+                    )}
+                  </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex items-start">
+                    <Avatar className="mt-0.5 h-8 w-8 mr-2 bg-primary/20">
+                      <MessageCircle className="h-4 w-4 text-primary" />
+                    </Avatar>
+                    <div className="bg-muted p-3 rounded-lg">
+                      <div className="flex space-x-1">
+                        <span className="h-2 w-2 bg-primary/60 rounded-full animate-bounce" />
+                        <span
+                          className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.2s" }}
+                        />
+                        <span
+                          className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"
+                          style={{ animationDelay: "0.4s" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              <form
+                onSubmit={handleFormSubmit}
+                className="flex items-center space-x-2"
+              >
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Type a message..."
+                  className="flex-1"
+                />
+                <Button type="submit" size="icon" disabled={!inputValue.trim()}>
+                  <SendIcon className="h-4 w-4" />
+                </Button>
+              </form>
+
+              <div className="text-xs text-center text-muted-foreground mt-2">
+                <Popover>
+                  <PopoverTrigger className="underline text-xs">
+                    Privacy Notice
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 text-xs">
+                    <p>
+                      Your conversation is private. No data is stored after
+                      closing this chat. For mental health emergencies, please
+                      contact a professional or crisis helpline.
+                    </p>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="resources"
+              className="flex-1 overflow-y-auto p-4 space-y-4"
+            >
+              <div>
+                <h3 className="text-lg font-medium">Mental Health Resources</h3>
+                <div className="mt-2 space-y-3">
+                  {MENTAL_HEALTH_RESOURCES.map((resource, idx) => (
+                    <div key={idx} className="border rounded-md p-3">
+                      <h4 className="font-medium">{resource.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {resource.description}
+                      </p>
+                      <a
+                        href={resource.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-primary hover:underline mt-1 inline-block"
+                      >
+                        Learn More
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium">Educational Materials</h3>
+                <div className="mt-2 space-y-3">
+                  {Object.entries(EDUCATIONAL_CONTENT).map(
+                    ([key, content], idx) => (
+                      <div key={idx} className="border rounded-md p-3">
+                        <h4 className="font-medium">{content.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {content.content.substring(0, 120)}...
+                        </p>
+                        <Button
+                          variant="link"
+                          className="px-0 text-sm h-auto"
+                          onClick={() => {
+                            setActiveTab("chat");
+                            handleSuggestedResponse(
+                              `Tell me more about ${key}`
+                            );
+                          }}
+                        >
+                          Discuss this topic
+                        </Button>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="exercises"
+              className="flex-1 overflow-y-auto p-4 space-y-6"
+            >
+              <div>
+                <h3 className="text-lg font-medium">Breathing Exercises</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Breathing techniques to help reduce stress and anxiety
+                </p>
+
+                <div className="space-y-3">
+                  {QUICK_BREATHING_EXERCISES.map((exercise, idx) => (
+                    <div key={idx} className="border rounded-md p-3">
+                      <h4 className="font-medium">{exercise.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {exercise.instructions}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {exercise.benefits}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => handleBreathingExerciseSelect(idx)}
+                      >
+                        Try Now
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium">Grounding Techniques</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Quick exercises to help you reconnect with the present moment
+                </p>
+
+                <div className="space-y-3">
+                  {GROUNDING_TECHNIQUES.map((technique, idx) => (
+                    <div key={idx} className="border rounded-md p-3">
+                      <p className="text-sm">{technique}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium">Journaling</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Express your thoughts through guided journaling
+                </p>
+
+                <Button
+                  variant="outline"
+                  onClick={handleShowJournalPrompt}
+                >
+                  Get a Journal Prompt
+                </Button>
+
+                {showJournalPrompt && (
+                  <div className="border rounded-md p-3 mt-3 space-y-3">
+                    <p className="text-sm font-medium">{journalPrompt}</p>
+                    <textarea
+                      value={journalEntry}
+                      onChange={(e) => setJournalEntry(e.target.value)}
+                      className="w-full h-32 p-2 text-sm border rounded-md"
+                      placeholder="Write your thoughts here..."
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleSaveJournalEntry}
+                    >
+                      Save Entry
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default AIChatCompanion;
