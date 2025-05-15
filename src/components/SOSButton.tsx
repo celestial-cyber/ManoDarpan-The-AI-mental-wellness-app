@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -223,7 +223,7 @@ const SOSButton = () => {
                         onClick={sendAlertToAll}
                       >
                         <Users className="h-4 w-4 mr-2" />
-                        Alert All
+                        Send to All Contacts
                       </Button>
                     </div>
                   </div>
