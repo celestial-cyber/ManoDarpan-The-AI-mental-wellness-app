@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ShieldAlert, Save, Send } from "lucide-react";
+import { ShieldAlert, Save, Send, Plus, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+  SheetFooter,
+} from "@/components/ui/sheet";
 
 interface TrustedContact {
   id: string;
@@ -30,6 +39,7 @@ interface TrustedContact {
 const SOSButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingContact, setIsAddingContact] = useState(false);
+  const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
   const [trustedContacts, setTrustedContacts] = useState<TrustedContact[]>(() => {
     const savedContacts = localStorage.getItem("trustedContacts");
     return savedContacts ? JSON.parse(savedContacts) : [];
@@ -61,6 +71,7 @@ const SOSButton = () => {
     
     setNewContact({ name: "", phone: "" });
     setIsAddingContact(false);
+    setIsContactSheetOpen(false);
     
     // Auto-select the new contact if it's the first one
     if (updatedContacts.length === 1) {
@@ -68,31 +79,44 @@ const SOSButton = () => {
     }
   };
 
-  const sendAlert = () => {
+  const sendAlertToContact = (contactId?: string) => {
+    if (!contactId && trustedContacts.length === 0) {
+      setIsAddingContact(true);
+      return;
+    }
+    
+    const contactToAlert = contactId 
+      ? trustedContacts.find(c => c.id === contactId)
+      : null;
+    
+    // Mock function to send alert to trusted contact
+    toast({
+      title: "Alert sent",
+      description: contactToAlert 
+        ? `${contactToAlert.name} has been notified` 
+        : "All trusted contacts have been notified",
+    });
+    
+    setIsOpen(false);
+  };
+
+  const sendAlertToAll = () => {
     if (trustedContacts.length === 0) {
       setIsAddingContact(true);
       return;
     }
     
-    if (!selectedContactId && trustedContacts.length > 1) {
-      toast({
-        title: "Select a contact",
-        description: "Please select a trusted contact to notify",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const contactToAlert = selectedContactId 
-      ? trustedContacts.find(c => c.id === selectedContactId)
-      : trustedContacts[0];
-    
-    // Mock function to send alert to trusted contact
+    // Mock function to send alert to all trusted contacts
     toast({
       title: "Alert sent",
-      description: `${contactToAlert?.name} has been notified`,
+      description: `${trustedContacts.length} contacts have been notified`,
     });
+    
     setIsOpen(false);
+  };
+
+  const openContactSheet = () => {
+    setIsContactSheetOpen(true);
   };
 
   return (
@@ -131,7 +155,9 @@ const SOSButton = () => {
               <div className="border p-4 rounded-lg space-y-3">
                 <h3 className="font-semibold">Add a Trusted Contact</h3>
                 <p className="text-sm text-muted-foreground">
-                  You don't have any trusted contacts yet. Add someone who can help in a crisis.
+                  {trustedContacts.length === 0 
+                    ? "You don't have any trusted contacts yet. Add someone who can help in a crisis."
+                    : "Add another trusted contact to your emergency list."}
                 </p>
                 <div className="space-y-2">
                   <Label htmlFor="name">Contact Name</Label>
@@ -163,48 +189,43 @@ const SOSButton = () => {
               </div>
             ) : (
               <div>
-                <h3 className="font-semibold mb-2">Notify your trusted contact</h3>
+                <h3 className="font-semibold mb-2">Emergency Alert Options</h3>
                 {trustedContacts.length === 0 ? (
                   <Button onClick={() => setIsAddingContact(true)} className="w-full">
                     <Save className="h-4 w-4 mr-2" />
                     Add Trusted Contact
                   </Button>
-                ) : trustedContacts.length === 1 ? (
-                  <Button onClick={sendAlert} className="w-full">
-                    <Send className="h-4 w-4 mr-2" />
-                    Send Alert to {trustedContacts[0].name}
-                  </Button>
                 ) : (
                   <div className="space-y-3">
-                    <Select value={selectedContactId} onValueChange={setSelectedContactId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a trusted contact" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {trustedContacts.map((contact) => (
-                          <SelectItem key={contact.id} value={contact.id}>
-                            {contact.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <Button 
-                      onClick={sendAlert} 
+                      onClick={() => openContactSheet()} 
                       className="w-full"
-                      disabled={!selectedContactId}
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      Send Alert
+                      Send Alert to Trusted Contact
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => setIsAddingContact(true)}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Add Another Contact
-                    </Button>
+                    
+                    <div className="flex justify-between">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-[48%]"
+                        onClick={() => setIsAddingContact(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Contact
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-[48%] bg-red-100 hover:bg-red-200 border-red-200"
+                        onClick={sendAlertToAll}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Alert All
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -217,6 +238,48 @@ const SOSButton = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Sheet for selecting contact to alert */}
+      <Sheet open={isContactSheetOpen} onOpenChange={setIsContactSheetOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Select Contact to Alert</SheetTitle>
+            <SheetDescription>
+              Choose which trusted contact you want to send an alert to
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="py-6 space-y-4">
+            {trustedContacts.map((contact) => (
+              <Button 
+                key={contact.id}
+                variant="outline"
+                className="w-full justify-start text-left h-auto py-3 px-4"
+                onClick={() => sendAlertToContact(contact.id)}
+              >
+                <div>
+                  <p className="font-medium">{contact.name}</p>
+                  <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                </div>
+              </Button>
+            ))}
+            
+            <Button 
+              className="w-full mt-4"
+              onClick={sendAlertToAll}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Send Alert to All Contacts
+            </Button>
+          </div>
+          
+          <SheetFooter>
+            <SheetClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </>
   );
 };
