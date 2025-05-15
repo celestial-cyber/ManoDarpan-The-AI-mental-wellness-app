@@ -759,7 +759,7 @@ const AIChatCompanion = () => {
       <Button
         variant="outline"
         size="icon"
-        className="fixed bottom-6 right-6 rounded-full w-14 h-14 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 z-50 md:bottom-8 md:right-8"
+        className="fixed bottom-6 left-6 rounded-full w-14 h-14 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 z-50 md:bottom-8 md:left-8"
         onClick={() => setIsOpen(true)}
       >
         <MessageCircle className="h-6 w-6" />
@@ -816,13 +816,13 @@ const AIChatCompanion = () => {
                     )}
 
                     <div
-                      className={`rounded-lg p-3 max-w-[75%] ${
+                      className={`rounded-lg p-3 max-w-[75%] break-words ${
                         message.sender === "user"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted"
                       }`}
                     >
-                      <p className="text-sm">{message.text}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.text}</p>
                       {message.sender === "ai" && message.suggestedResponses && (
                         <div className="mt-2 space-y-1.5">
                           {message.suggestedResponses.map((response, idx) => (
